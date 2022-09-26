@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:5.5.0
+    hostname: zookeeper
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: INFO
+    ports:
+      - "2181:2181"
+    volumes:
+      - ./demokafka/zookeeper/conf:/etc/kafka/
+      - ./demokafka/zookeeper/logs:/logs
+      - ./demokafka/zookeeper/data:/var/lib/zookeeper/data
+      - ./demokafka/zookeeper/datalog:/var/lib/zookeeper/log/
+
+  kafka:
+    image: confluentinc/cp-kafka:5.5.0
+    hostname: kafka
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka:29092,LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    volumes:
+      - ./demokafka/kafka/logs:/var/log/kafka
+      - ./demokafka/kafka/data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
